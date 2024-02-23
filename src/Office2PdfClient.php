@@ -168,15 +168,15 @@ class Office2PdfClient
      * Verifies if the client supports a file.
      *
      * @param string $filename The filename.
-     * @param bool $allowNoExtension If enabled, the method will return true for files without extension.
+     * @param bool $strictMode If enabled, the method will return true for files without extension.
      * @return bool
      */
-    public function supports(string $filename, bool $allowNoExtension = true): bool
+    public function supports(string $filename, bool $strictMode = false): bool
     {
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         if ($extension) {
             return in_array(strtolower($extension), self::SUPPORTED_EXTENSIONS);
         }
-        return $allowNoExtension;
+        return !$strictMode;
     }
 }
