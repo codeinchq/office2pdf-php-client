@@ -65,6 +65,23 @@ catch (Exception $e) {
 }
 ```
 
+### Validating the support of a file format:
+
+```php
+
+use CodeInc\Office2PdfClient\Office2PdfClient;
+use CodeInc\Office2PdfClient\Exception;
+
+$filename = 'a-file.docx';
+
+$client = new Office2PdfClient('http://localhost:3000/');
+
+$client->isSupported("a-file.docx"); // returns true
+$client->isSupported("a-file"); // returns true 
+$client->isSupported("a-file", false); // returns false (the second argument is the strict mode)
+$client->isSupported("a-file.pdf"); // returns false
+``` 
+
 ## License
 
 The library is published under the MIT license (see [`LICENSE`](LICENSE) file).

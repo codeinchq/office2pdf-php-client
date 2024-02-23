@@ -18,4 +18,5 @@ class Exception extends BaseException
     public const int ERROR_LOCAL_FILE = 100;
     public const int ERROR_REQUEST = 200;
     public const int ERROR_RESPONSE = 300;
+    public const int ERROR_UNSUPPORTED_FILE_TYPE = 400;
 }

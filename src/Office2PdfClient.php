@@ -20,8 +20,30 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 
+/**
+ * Class Office2PdfClient
+ *
+ * @package CodeInc\Office2PdfClient
+ * @link https://www.codeinc.co
+ * @license https://opensource.org/licenses/MIT
+ */
 class Office2PdfClient
 {
+    public const array SUPPORTED_EXTENSIONS = [
+        'txt',
+        'rtf',
+        'fodt',
+        'doc',
+        'docx',
+        'odt',
+        'xls',
+        'xlsx',
+        'ods',
+        'ppt',
+        'pptx',
+        'odp'
+    ];
+
     public function __construct(
         private readonly string $baseUrl,
         private ClientInterface|null $client = null,
@@ -36,26 +58,35 @@ class Office2PdfClient
     /**
      * Converts an Office file to PDF using the OFFICE2PDF API.
      *
-     * @param StreamInterface|resource|string $stream The PDF content.
-     * @param string $filename The filename.
-     * @return StreamInterface
+     * @param StreamInterface|resource|string $stream The PDF content as a stream, a resource or a string.
+     * @param string $filename The filename associated with the stream (optional).
+     * @param bool $skipTypeCheck If enabled, the method will not check if the file extension is supported.
+     * @return StreamInterface The PDF content as a stream.
      * @throws Exception
      */
-    public function convert(mixed $stream, string $filename = 'file'): StreamInterface
+    public function convert(mixed $stream, string $filename = 'file', bool $skipTypeCheck = false): StreamInterface
     {
-        try {
-            // building the multipart stream
-            $multipartStreamBuilder = (new MultipartStreamBuilder($this->streamFactory))
-                ->addResource(
-                    'file',
-                    $stream,
-                    [
-                        'filename' => $filename,
-                        'headers'  => ['Content-Type' => 'application/pdf']
-                    ]
-                );
+        // checking the file extension
+        if (!$this->supports($filename) && !$skipTypeCheck) {
+            throw new Exception(
+                message: "The file '$filename' is not supported",
+                code: Exception::ERROR_UNSUPPORTED_FILE_TYPE
+            );
+        }
 
-            // sending the request
+        // building the multipart stream
+        $multipartStreamBuilder = (new MultipartStreamBuilder($this->streamFactory))
+            ->addResource(
+                'file',
+                $stream,
+                [
+                    'filename' => $filename,
+                    'headers'  => ['Content-Type' => 'application/pdf']
+                ]
+            );
+
+        // sending the request
+        try {
             $response = $this->client->sendRequest(
                 $this->requestFactory
                     ->createRequest("POST", $this->getConvertEndpointUri())
@@ -89,8 +120,8 @@ class Office2PdfClient
     /**
      * Converts a local Office file to a local PDF file using the OFFICE2PDF API.
      *
-     * @param string $officePath
-     * @param string $pdfPath
+     * @param string $officePath The path to the input Office file.
+     * @param string $pdfPath The path to the output PDF file.
      * @throws Exception
      */
     public function convertFile(string $officePath, string $pdfPath): void
@@ -131,5 +162,21 @@ class Office2PdfClient
             $url .= '/';
         }
         return "{$url}convert";
+    }
+
+    /**
+     * Verifies if the client supports a file.
+     *
+     * @param string $filename The filename.
+     * @param bool $allowNoExtension If enabled, the method will return true for files without extension.
+     * @return bool
+     */
+    public function supports(string $filename, bool $allowNoExtension = true): bool
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        if ($extension) {
+            return in_array(strtolower($extension), self::SUPPORTED_EXTENSIONS);
+        }
+        return $allowNoExtension;
     }
 }

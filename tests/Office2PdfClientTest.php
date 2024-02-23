@@ -22,6 +22,8 @@ final class Office2PdfClientTest extends TestCase
     private const string TEST_TEMP_PATH = __DIR__.'/temp';
 
     /**
+     * Tests the method convert() with a DOCX file.
+     *
      * @throws Exception
      */
     public function testConvert(): void
@@ -40,6 +42,50 @@ final class Office2PdfClientTest extends TestCase
         unlink($tempPdfFile);
     }
 
+    /**
+     * Tests a failure when trying to convert an unsupported file type.
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function testConvertUnsupportedFileType(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionCode(Exception::ERROR_UNSUPPORTED_FILE_TYPE);
+        $this->getNewClient()->convert("", "file.pdf");
+    }
+
+    /**
+     * Tests the method supports().
+     *
+     * @return void
+     */
+    public function testSupport(): void
+    {
+        $client = $this->getNewClient();
+        foreach (Office2PdfClient::SUPPORTED_EXTENSIONS as $extension) {
+            $this->assertTrue(
+                $client->supports("file.$extension"),
+                "The method supports() should return true for a file with the extension $extension."
+            );
+        }
+
+        $this->assertTrue(
+            $client->supports("filename_without_extension"),
+            "The method supports() should return true for a file without extension."
+        );
+
+        $this->assertFalse(
+            $client->supports('file.pdf'),
+            "The method supports() should return false for a PDF file."
+        );
+    }
+
+    /**
+     * Returns a new Office2PdfClient instance.
+     *
+     * @return Office2PdfClient
+     */
     private function getNewClient(): Office2PdfClient
     {
         return new Office2PdfClient(
