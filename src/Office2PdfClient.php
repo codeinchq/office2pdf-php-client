@@ -24,8 +24,9 @@ use Psr\Http\Message\StreamInterface;
  * Class Office2PdfClient
  *
  * @package CodeInc\Office2PdfClient
- * @link https://www.codeinc.co
- * @license https://opensource.org/licenses/MIT
+ * @link https://github.com/codeinchq/office2pdf
+ * @link https://github.com/codeinchq/office2pdf-php-client
+ * @license https://opensource.org/licenses/MIT MIT
  */
 class Office2PdfClient
 {
