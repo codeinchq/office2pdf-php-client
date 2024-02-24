@@ -14,37 +14,15 @@ composer require codeinc/office2pdf-client
 
 This client requires a running instance of the [office2pdf](https://github.com/codeinchq/office2pdf) service. The service can be run locally [using Docker](https://hub.docker.com/r/codeinchq/office2pdf) or deployed to a server.
 
-### Base example:
-
-```php
-use CodeInc\Office2PdfClient\Office2PdfClient;
-use CodeInc\Office2PdfClient\Exception;
-
-$apiBaseUri = 'http://localhost:3000/';
-$localDocPath = '/path/to/local/file.docx';
-
-try {
-    // convert
-    $client = new Office2PdfClient($apiBaseUri);
-    $pdfStream = $client->convertFile($localDocPath);
-    
-    // display the text
-    echo (string)$pdfStream;
-}
-catch (Exception $e) {
-    // handle exception
-}
-```
-
-### With options:
-
+### Example:
 ```php
 use CodeInc\Office2PdfClient\Office2PdfClient;
 use CodeInc\Office2PdfClient\ConvertOptions;
 use CodeInc\Office2PdfClient\Format;
 
 $apiBaseUri = 'http://localhost:3000/';
-$localPdfPath = '/path/to/local/file.pdf';
+$srcDocPath = '/path/to/local/file.docx';
+$destPdfPath = '/path/to/local/file.pdf';
 $convertOption = new ConvertOptions(
     firstPage: 2,
     lastPage: 3,
@@ -52,21 +30,23 @@ $convertOption = new ConvertOptions(
 );
 
 try {
-    // convert 
     $client = new Office2PdfClient($apiBaseUri);
-    $jsonResponse = $client->convertFile($localPdfPath, $convertOption);
-    $decodedJson = $client->processJsonResponse($jsonResponse);
+
+    // convert 
+    $pdfStream = $client->convert(
+        $client->createStreamFromFile($srcDocPath), 
+        $convertOption
+    );
     
-   // display the text in a JSON format
-   var_dump($decodedJson); 
+   // save the PDF
+   $client->saveStreamToFile($pdfStream, $destPdfPath); 
 }
 catch (Exception $e) {
     // handle exception
 }
 ```
 
-### Validating the support of a file format:
-
+#### Validating the support of a file format:
 ```php
 
 use CodeInc\Office2PdfClient\Office2PdfClient;
