@@ -119,36 +119,43 @@ class Office2PdfClient
     }
 
     /**
-     * Converts a local Office file to a local PDF file using the OFFICE2PDF API.
+     * Opens a local file and creates a stream from it.
      *
-     * @param string $officePath The path to the input Office file.
-     * @param string $pdfPath The path to the output PDF file.
+     * @param string $path The path to the file.
+     * @param string $openMode The mode used to open the file.
+     * @return StreamInterface
      * @throws Exception
      */
-    public function convertFile(string $officePath, string $pdfPath): void
+    public function createStreamFromFile(string $path, string $openMode = 'r'): StreamInterface
     {
-        // opening the file
-        $src = fopen($officePath, 'r');
-        if ($src === false) {
-            throw new Exception(
-                message: "The file '$officePath' could not be opened",
-                code: Exception::ERROR_LOCAL_FILE
-            );
+        $f = fopen($path, $openMode);
+        if ($f === false) {
+            throw new Exception("The file '$path' could not be opened", Exception::ERROR_FILE_OPEN);
         }
 
-        // opening the destination file
-        $dest = fopen($pdfPath, 'w');
-        if ($dest === false) {
-            throw new Exception(
-                message: "The file '$pdfPath' could not be opened",
-                code: Exception::ERROR_LOCAL_FILE
-            );
+        return $this->streamFactory->createStreamFromResource($f);
+    }
+
+    /**
+     * Saves a stream to a local file.
+     *
+     * @param StreamInterface $stream
+     * @param string $path The path to the file.
+     * @param string $openMode The mode used to open the file.
+     * @throws Exception
+     */
+    public function saveStreamToFile(StreamInterface $stream, string $path, string $openMode = 'w'): void
+    {
+        $f = fopen($path, $openMode);
+        if ($f === false) {
+            throw new Exception("The file '$path' could not be opened", Exception::ERROR_FILE_OPEN);
         }
 
-        // converting the file & copying the stream to the destination file
-        $stream = $this->convert($src, basename($officePath));
-        stream_copy_to_stream($stream->detach(), $dest);
-        fclose($dest);
+        if (stream_copy_to_stream($stream->detach(), $f) === false) {
+            throw new Exception("The stream could not be copied to the file '$path'", Exception::ERROR_FILE_WRITE);
+        }
+
+        fclose($f);
     }
 
     /**

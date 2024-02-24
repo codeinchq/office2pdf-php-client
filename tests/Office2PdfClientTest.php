@@ -14,12 +14,13 @@ namespace CodeInc\Office2PdfClient\Tests;
 use CodeInc\Office2PdfClient\Exception;
 use CodeInc\Office2PdfClient\Office2PdfClient;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 
 final class Office2PdfClientTest extends TestCase
 {
     private const string DEFAULT_OFFICE2PDF_BASE_URL = 'http://localhost:3000';
     private const string TEST_DOC_PATH = __DIR__.'/assets/file.docx';
-    private const string TEST_TEMP_PATH = __DIR__.'/temp';
+    private const string TEST_TEMP_PATH = __DIR__.'/assets/file.pdf';
 
     /**
      * Tests the method convert() with a DOCX file.
@@ -28,18 +29,23 @@ final class Office2PdfClientTest extends TestCase
      */
     public function testConvert(): void
     {
-        $this->assertIsWritable(self::TEST_TEMP_PATH, "The directory ".self::TEST_TEMP_PATH." is not writable.");
+        $this->assertIsWritable(
+            dirname(self::TEST_TEMP_PATH),
+            "The directory ".dirname(self::TEST_TEMP_PATH)." is not writable."
+        );
 
-        $tempPdfFile = self::TEST_TEMP_PATH.'/file.pdf';
-        if (file_exists($tempPdfFile)) {
-            unlink($tempPdfFile);
-        }
+        $client = $this->getNewClient();
+        $stream = $client->convert($client->createStreamFromFile(self::TEST_DOC_PATH));
+        $this->assertInstanceOf(StreamInterface::class, $stream, "The method convert() should return a stream.");
+        $client->saveStreamToFile($stream, self::TEST_TEMP_PATH);
+        $this->assertFileExists(self::TEST_TEMP_PATH, "The converted file does not exist.");
+        $this->assertStringContainsString(
+            '%PDF-1.',
+            file_get_contents(self::TEST_TEMP_PATH),
+            "The file self::TEST_TEMP_PATH is not a PDF file."
+        );
 
-        $this->getNewClient()->convertFile(self::TEST_DOC_PATH, $tempPdfFile);
-        $this->assertFileExists($tempPdfFile, "The file $tempPdfFile does not exist.");
-        $this->assertGreaterThan(0, filesize($tempPdfFile), "The file $tempPdfFile is empty.");
-
-        unlink($tempPdfFile);
+        unlink(self::TEST_TEMP_PATH);
     }
 
     /**
