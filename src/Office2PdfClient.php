@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace CodeInc\Office2PdfClient;
 
+use Http\Client\Exception\RequestException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use Http\Message\MultipartStream\MultipartStreamBuilder;
@@ -130,7 +131,7 @@ class Office2PdfClient
     {
         $f = fopen($path, $openMode);
         if ($f === false) {
-            throw new Exception("The file '$path' could not be opened", Exception::ERROR_FILE_OPEN);
+            throw new Exception("The file '$path' could not be opened", Exception::ERROR_LOCAL_FILE);
         }
 
         return $this->streamFactory->createStreamFromResource($f);
@@ -148,11 +149,11 @@ class Office2PdfClient
     {
         $f = fopen($path, $openMode);
         if ($f === false) {
-            throw new Exception("The file '$path' could not be opened", Exception::ERROR_FILE_OPEN);
+            throw new Exception("The file '$path' could not be opened", Exception::ERROR_LOCAL_FILE);
         }
 
         if (stream_copy_to_stream($stream->detach(), $f) === false) {
-            throw new Exception("The stream could not be copied to the file '$path'", Exception::ERROR_FILE_WRITE);
+            throw new Exception("The stream could not be copied to the file '$path'", Exception::ERROR_LOCAL_FILE);
         }
 
         fclose($f);
@@ -186,5 +187,26 @@ class Office2PdfClient
             return in_array(strtolower($extension), self::SUPPORTED_EXTENSIONS);
         }
         return !$strictMode;
+    }
+
+    /**
+     * Health check to verify the service is running.
+     *
+     * @return bool Health check response, expected to be "ok".
+     * @throws \Exception
+     */
+    public function healthCheck(): bool
+    {
+        try {
+            $response = $this->client->get('/health', [
+                'headers' => [
+                    'x-api-key' => $this->apiKey,
+                ],
+            ]);
+
+            return (string)$response->getBody() == 'ok';
+        } catch (RequestException $e) {
+            throw new \Exception($e->getMessage());
+        }
     }
 }
