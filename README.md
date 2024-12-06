@@ -1,4 +1,6 @@
-# office2pdf PHP client
+# Office2Pdf API client
+
+![Tests](https://github.com/codeinchq/office2pdf-php-client/actions/workflows/phpunit.yml/badge.svg)
 
 This repository contains a PHP 8.2+ library for converting Office files to PDF using the [office2pdf](https://github.com/codeinchq/office2pdf) service.
 
