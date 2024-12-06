@@ -20,7 +20,7 @@ final class Office2PdfClientTest extends TestCase
 {
     private const string DEFAULT_OFFICE2PDF_BASE_URL = 'http://localhost:3000';
     private const string TEST_DOC_PATH = __DIR__.'/assets/file.docx';
-    private const string TEST_TEMP_PATH = __DIR__.'/assets/file.pdf';
+    private const string TEST_TEMP_PATH = '/tmp/file.pdf';
 
     public function testHealth(): void
     {
