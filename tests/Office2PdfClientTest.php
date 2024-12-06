@@ -22,6 +22,21 @@ final class Office2PdfClientTest extends TestCase
     private const string TEST_DOC_PATH = __DIR__.'/assets/file.docx';
     private const string TEST_TEMP_PATH = __DIR__.'/assets/file.pdf';
 
+    public function testHealth(): void
+    {
+        // testing a healthy service
+        $client = $this->getNewClient();
+        $this->assertNotFalse($client->checkServiceHealth(), "The service is not healthy.");
+
+        // testing a non-existing service
+        $client = new Office2PdfClient('https://example.com');
+        $this->assertFalse($client->checkServiceHealth(), "The service is healthy.");
+
+        // testing a non-existing url
+        $client = new Office2PdfClient('https://example-NQrkB6F6MwuXesMrBhqx.com');
+        $this->assertFalse($client->checkServiceHealth(), "The service is healthy.");
+    }
+
     /**
      * Tests the method convert() with a DOCX file.
      *
@@ -35,9 +50,16 @@ final class Office2PdfClientTest extends TestCase
         );
 
         $client = $this->getNewClient();
-        $stream = $client->convert($client->createStreamFromFile(self::TEST_DOC_PATH));
+        $stream = $client->convert($client->streamFactory->createStreamFromFile(self::TEST_DOC_PATH));
         $this->assertInstanceOf(StreamInterface::class, $stream, "The method convert() should return a stream.");
-        $client->saveStreamToFile($stream, self::TEST_TEMP_PATH);
+
+        $f = fopen(self::TEST_TEMP_PATH, 'w+');
+        self::assertNotFalse($f, "The test file could not be opened");
+
+        $r = stream_copy_to_stream($stream->detach(), $f);
+        self::assertNotFalse($r, "The stream could not be copied to the test file");
+        fclose($f);
+
         $this->assertFileExists(self::TEST_TEMP_PATH, "The converted file does not exist.");
         $this->assertStringContainsString(
             '%PDF-1.',
