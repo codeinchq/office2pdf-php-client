@@ -125,7 +125,7 @@ readonly class Office2PdfClient
     }
 
     /**
-     * Returns the convert endpoint URI.
+     * Returns an endpoint URI.
      *
      * @param string $endpoint
      * @return string
