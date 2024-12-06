@@ -25,12 +25,16 @@ use Psr\Http\Message\StreamInterface;
  * Class Office2PdfClient
  *
  * @package CodeInc\Office2PdfClient
- * @link https://github.com/codeinchq/office2pdf
- * @link https://github.com/codeinchq/office2pdf-php-client
+ * @link    https://github.com/codeinchq/office2pdf
+ * @link    https://github.com/codeinchq/office2pdf-php-client
  * @license https://opensource.org/licenses/MIT MIT
  */
-class Office2PdfClient
+readonly class Office2PdfClient
 {
+    public ClientInterface $client;
+    public StreamFactoryInterface $streamFactory;
+    public RequestFactoryInterface $requestFactory;
+
     public const array SUPPORTED_EXTENSIONS = [
         'txt',
         'rtf',
@@ -47,22 +51,23 @@ class Office2PdfClient
     ];
 
     public function __construct(
-        private readonly string $baseUrl,
-        private ClientInterface|null $client = null,
-        private StreamFactoryInterface|null $streamFactory = null,
-        private RequestFactoryInterface|null $requestFactory = null,
+        private string $baseUrl,
+        ClientInterface|null $client = null,
+        StreamFactoryInterface|null $streamFactory = null,
+        RequestFactoryInterface|null $requestFactory = null,
     ) {
-        $this->client ??= Psr18ClientDiscovery::find();
-        $this->streamFactory ??= Psr17FactoryDiscovery::findStreamFactory();
-        $this->requestFactory ??= Psr17FactoryDiscovery::findRequestFactory();
+        $this->client = $client ?? Psr18ClientDiscovery::find();
+        $this->streamFactory = $streamFactory ?? Psr17FactoryDiscovery::findStreamFactory();
+        $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
     }
 
     /**
      * Converts an Office file to PDF using the OFFICE2PDF API.
      *
      * @param StreamInterface|resource|string $stream The PDF content as a stream, a resource or a string.
-     * @param string $filename The filename associated with the stream (optional).
-     * @param bool $skipTypeCheck If enabled, the method will not check if the file extension is supported.
+     * @param string $filename                        The filename associated with the stream (optional).
+     * @param bool $skipTypeCheck                     If enabled, the method will not check if the file extension is
+     *                                                supported.
      * @return StreamInterface The PDF content as a stream.
      * @throws Exception
      */
@@ -91,7 +96,7 @@ class Office2PdfClient
         try {
             $response = $this->client->sendRequest(
                 $this->requestFactory
-                    ->createRequest("POST", $this->getConvertEndpointUri())
+                    ->createRequest("POST", $this->getEndpointUri("/convert"))
                     ->withHeader(
                         "Content-Type",
                         "multipart/form-data; boundary={$multipartStreamBuilder->getBoundary()}"
@@ -120,57 +125,22 @@ class Office2PdfClient
     }
 
     /**
-     * Opens a local file and creates a stream from it.
-     *
-     * @param string $path The path to the file.
-     * @param string $openMode The mode used to open the file.
-     * @return StreamInterface
-     * @throws Exception
-     */
-    public function createStreamFromFile(string $path, string $openMode = 'r'): StreamInterface
-    {
-        $f = fopen($path, $openMode);
-        if ($f === false) {
-            throw new Exception("The file '$path' could not be opened", Exception::ERROR_LOCAL_FILE);
-        }
-
-        return $this->streamFactory->createStreamFromResource($f);
-    }
-
-    /**
-     * Saves a stream to a local file.
-     *
-     * @param StreamInterface $stream
-     * @param string $path The path to the file.
-     * @param string $openMode The mode used to open the file.
-     * @throws Exception
-     */
-    public function saveStreamToFile(StreamInterface $stream, string $path, string $openMode = 'w'): void
-    {
-        $f = fopen($path, $openMode);
-        if ($f === false) {
-            throw new Exception("The file '$path' could not be opened", Exception::ERROR_LOCAL_FILE);
-        }
-
-        if (stream_copy_to_stream($stream->detach(), $f) === false) {
-            throw new Exception("The stream could not be copied to the file '$path'", Exception::ERROR_LOCAL_FILE);
-        }
-
-        fclose($f);
-    }
-
-    /**
      * Returns the convert endpoint URI.
      *
+     * @param string $endpoint
      * @return string
      */
-    private function getConvertEndpointUri(): string
+    private function getEndpointUri(string $endpoint): string
     {
         $url = $this->baseUrl;
-        if (!str_ends_with($url, '/')) {
-            $url .= '/';
+        if (str_ends_with($url, '/')) {
+            $url = substr($url, 0, -1);
         }
-        return "{$url}convert";
+        if (str_starts_with($endpoint, '/')) {
+            $endpoint = substr($endpoint, 1);
+        }
+
+        return "$url/$endpoint";
     }
 
     /**
@@ -193,20 +163,27 @@ class Office2PdfClient
      * Health check to verify the service is running.
      *
      * @return bool Health check response, expected to be "ok".
-     * @throws \Exception
      */
-    public function healthCheck(): bool
+    public function checkServiceHealth(): bool
     {
         try {
-            $response = $this->client->get('/health', [
-                'headers' => [
-                    'x-api-key' => $this->apiKey,
-                ],
-            ]);
+            $response = $this->client->sendRequest(
+                $this->requestFactory->createRequest(
+                    "GET",
+                    $this->getEndpointUri("/health")
+                )
+            );
 
-            return (string)$response->getBody() == 'ok';
-        } catch (RequestException $e) {
-            throw new \Exception($e->getMessage());
+            // The response status code should be 200
+            if ($response->getStatusCode() !== 200) {
+                return false;
+            }
+
+            // The response body should be {"status":"up"}
+            $responseBody = json_decode((string)$response->getBody(), true);
+            return isset($responseBody['status']) && $responseBody['status'] === 'up';
+        } catch (ClientExceptionInterface) {
+            return false;
         }
     }
 }
