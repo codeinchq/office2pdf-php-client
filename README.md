@@ -1,5 +1,6 @@
 # Office2Pdf API client
 
+[![Code Inc.](https://img.shields.io/badge/Code%20Inc.-Office2Pdf-blue)](https://github.com/codeinchq/office2pdf)
 ![Tests](https://github.com/codeinchq/office2pdf-php-client/actions/workflows/phpunit.yml/badge.svg)
 
 This repository contains a PHP 8.2+ library for converting Office files to PDF using the [office2pdf](https://github.com/codeinchq/office2pdf) service.
