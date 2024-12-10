@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace CodeInc\Office2PdfClient;
 
-use Http\Client\Exception\RequestException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use Http\Message\MultipartStream\MultipartStreamBuilder;
