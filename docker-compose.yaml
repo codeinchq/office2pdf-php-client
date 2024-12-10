@@ -1,5 +1,5 @@
 services:
   office2pdf:
-    image: codeinchq/office2pdf:latest
+    image: codeinchq/office2pdf:v1.7
     ports:
       - "3000:3000"
