@@ -1,4 +1,4 @@
-# Office2Pdf API client
+# Office2Pdf PHP client
 
 [![Code Inc.](https://img.shields.io/badge/Code%20Inc.-Office2Pdf-blue)](https://github.com/codeinchq/office2pdf)
 ![Tests](https://github.com/codeinchq/office2pdf-php-client/actions/workflows/phpunit.yml/badge.svg)
