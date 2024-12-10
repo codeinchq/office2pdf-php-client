@@ -163,7 +163,7 @@ readonly class Office2PdfClient
      *
      * @return bool Health check response, expected to be "ok".
      */
-    public function checkServiceHealth(): bool
+    public function isHealthy(): bool
     {
         try {
             $response = $this->client->sendRequest(

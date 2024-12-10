@@ -26,15 +26,15 @@ final class Office2PdfClientTest extends TestCase
     {
         // testing a healthy service
         $client = $this->getNewClient();
-        $this->assertNotFalse($client->checkServiceHealth(), "The service is not healthy.");
+        $this->assertNotFalse($client->isHealthy(), "The service is not healthy.");
 
         // testing a non-existing service
         $client = new Office2PdfClient('https://example.com');
-        $this->assertFalse($client->checkServiceHealth(), "The service is healthy.");
+        $this->assertFalse($client->isHealthy(), "The service is healthy.");
 
         // testing a non-existing url
         $client = new Office2PdfClient('https://example-NQrkB6F6MwuXesMrBhqx.com');
-        $this->assertFalse($client->checkServiceHealth(), "The service is healthy.");
+        $this->assertFalse($client->isHealthy(), "The service is healthy.");
     }
 
     /**
